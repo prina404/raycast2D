@@ -14,7 +14,7 @@ on:
 
 jobs:
   wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.runner }}
     runs-on: ${{ matrix.runner }}
 
     strategy:
@@ -58,5 +58,5 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.runner }}
           path: wheelhouse/*.whl
