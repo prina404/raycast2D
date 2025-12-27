@@ -1,0 +1,64 @@
+import raycaster
+import numpy as np
+from numpy.typing import NDArray
+from dataclasses import dataclass
+import math
+
+
+def cast(
+    image: NDArray,
+    pose: tuple[int, int] | tuple[int, int, float],
+    num_rays: int = 1000,
+    FOV: int = 360,
+    ray_length: int = 500,
+) -> NDArray:
+    _check_args(image, pose)
+    if len(image.shape) == 3:   # take only the first channel
+        image = image[:, :, 0]
+
+    p = _POSE(*pose)
+    start_angle = p.yaw - math.radians(FOV // 2)
+    end_angle = p.yaw + math.radians((FOV+1) // 2)
+
+    theta = np.linspace(start_angle, end_angle, num_rays)
+    x_rays = np.round(p.x + ray_length * np.cos(theta)).astype(np.uint32)
+    y_rays = np.round(p.y + ray_length * np.sin(theta)).astype(np.uint32)
+    
+    rays = np.column_stack((x_rays, y_rays, np.zeros_like(y_rays)))
+    
+    # raycaster modifies the rays array inplace to include collisions
+    raycaster.raycast(image.astype(np.uint8), rays, p.x, p.y)
+    # TODO: decide how to handle true collisions vs ray_length collisions 
+    return rays.copy()[:, :2]
+
+
+@dataclass
+class _POSE:
+    x: int
+    y: int
+    yaw: float = -math.pi / 2
+
+
+def _check_args(img: NDArray, pose: tuple) -> None:
+    if not np.issubdtype(img.dtype, np.integer):
+        raise ValueError(
+            f"Received an array with dtype {img.dtype}, The only supported dtypes are subtypes of np.integral.")
+
+    shape = img.shape
+    if len(shape) < 2 or (len(shape) > 2 and shape[2] > 1):
+        raise ValueError(
+            f"Received an array of shape {shape}. The only supported shapes are (H x W), (H x W x 1)."
+        )
+    if len(pose) < 2 or len(pose) > 3:
+        raise ValueError(
+            f"Received a pose tuple {pose}. The only supposed pose formats are (x, y) and (x, y, yaw).")
+
+    x, y = pose[0], pose[1]
+    H, W = shape[0], shape[1]
+    if x < 0 or x >= W:
+        raise IndexError(
+            f"x coordinate ({x}) if out of bounds for array with width {W}.")
+    if y < 0 or y >= H:
+        raise IndexError(
+            f"y coordinate ({y}) if out of bounds for array with height {H}.")
+
