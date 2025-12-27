@@ -46,8 +46,8 @@ static int OCCUPIED_CELL(PyArrayObject* img, int x, int y) {
 static void _bresenham_raycast(PyArrayObject* img, PyArrayObject* rays, int x, int y) {
     npy_intp N_RAYS = PyArray_DIM(rays, 0);
 
-    for (uint r = 0; r < (uint)N_RAYS; r++) {
-        uint* row = (uint*)PyArray_GETPTR1(rays, r);
+    for (size_t r = 0; r < (size_t)N_RAYS; r++) {
+        unsigned int* row = (unsigned int*)PyArray_GETPTR1(rays, r);
 
         int x0 = x, y0 = y;
         int x1 = row[0], y1 = row[1];
