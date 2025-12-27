@@ -84,3 +84,64 @@ def test_accepts_single_channel_3d_image() -> None:
     img = np.full((10, 10, 1), 255, dtype=np.uint8)
     rays = cast(img, (5, 5, 0.0), num_rays=1, FOV=1, ray_length=50)
     assert rays.shape == (1, 2)
+
+
+def test_only_true_collisions_true_returns_empty_when_no_collision() -> None:
+    img = np.full((30, 30), 255, dtype=np.uint8)
+    pose = (15, 15, 0.0)
+
+    # Small ray_length keeps endpoints inside free space (no border hit, no obstacles)
+    rays_true = cast(
+        img,
+        pose,
+        num_rays=5,
+        FOV=30,
+        ray_length=3,
+        only_true_collisions=True,
+    )
+    assert rays_true.shape == (0, 2)
+
+    rays_false = cast(
+        img,
+        pose,
+        num_rays=5,
+        FOV=30,
+        ray_length=3,
+        only_true_collisions=False,
+    )
+    assert rays_false.shape == (5, 2)
+
+
+def test_only_true_collisions_filters_to_obstacle_hits_subset() -> None:
+    img = np.full((30, 30), 255, dtype=np.uint8)
+    pose = (15, 15, 0.0)
+
+    # With num_rays=2 and FOV=180 around yaw=0, angles are exactly -pi/2 (up) and +pi/2 (down)
+    # Put an obstacle only on the "up" ray.
+    img[13, 15] = 0  # (x=15, y=13)
+
+    rays_true = cast(
+        img,
+        pose,
+        num_rays=2,
+        FOV=180,
+        ray_length=3,
+        only_true_collisions=True,
+    )
+    assert rays_true.shape == (1, 2)
+    assert tuple(map(int, rays_true[0])) == (15, 13)
+
+    rays_false = cast(
+        img,
+        pose,
+        num_rays=2,
+        FOV=180,
+        ray_length=3,
+        only_true_collisions=False,
+    )
+    assert rays_false.shape == (2, 2)
+
+    pts = {tuple(map(int, p)) for p in rays_false}
+    # One ray hits the obstacle; the other ends in free space (no collision)
+    assert (15, 13) in pts
+    assert (15, 18) in pts

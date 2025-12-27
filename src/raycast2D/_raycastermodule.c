@@ -5,22 +5,28 @@
 #include <numpy/arrayobject.h>
 
 static int CHECK_ARRAYS(PyArrayObject* img, PyArrayObject* rays) {
-    if (!img)
-        return 0;
-    if (PyArray_NDIM(img) != 2) {
-        Py_DECREF(img);
-        PyErr_SetString(PyExc_ValueError, "Image must be a 2D array, received shape different than (H, W)");
+    if (!img || !rays) {
+        Py_XDECREF(img);
+        if (rays) {
+            PyArray_DiscardWritebackIfCopy(rays);
+            Py_DECREF(rays);
+        }
         return 0;
     }
 
-    if (!rays) {
+    if (PyArray_NDIM(img) != 2) {
+        PyErr_SetString(PyExc_ValueError, "Image must be a 2D array, received shape different than (H, W)");
         Py_DECREF(img);
+        PyArray_DiscardWritebackIfCopy(rays);
+        Py_DECREF(rays);
         return 0;
     }
+
     if (PyArray_NDIM(rays) != 2 || PyArray_DIM(rays, 1) != 3) {
-        Py_DECREF(rays);
-        Py_DECREF(img);
         PyErr_SetString(PyExc_ValueError, "Rays must be a 2D array of shape (N, 3)");
+        Py_DECREF(img);
+        PyArray_DiscardWritebackIfCopy(rays);
+        Py_DECREF(rays);
         return 0;
     }
     return 1;
@@ -47,7 +53,7 @@ static void _bresenham_raycast(PyArrayObject* img, PyArrayObject* rays, int x, i
     npy_intp N_RAYS = PyArray_DIM(rays, 0);
 
     for (size_t r = 0; r < (size_t)N_RAYS; r++) {
-        unsigned int* row = (unsigned int*)PyArray_GETPTR1(rays, r);
+        unsigned int* row = (unsigned int*)PyArray_GETPTR2(rays, r, 0);
 
         int x0 = x, y0 = y;
         int x1 = row[0], y1 = row[1];

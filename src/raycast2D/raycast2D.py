@@ -35,8 +35,9 @@ def cast(
         image = image[:, :, 0]
 
     p = _POSE(*pose)
-    start_angle = p.yaw - math.radians(FOV // 2)
-    end_angle = p.yaw + math.radians((FOV+1) // 2)
+    half_fov = math.radians(FOV) / 2.0
+    start_angle = p.yaw - half_fov
+    end_angle = p.yaw + half_fov
 
     theta = np.linspace(start_angle, end_angle, num_rays)
     x_rays = np.round(p.x + ray_length * np.cos(theta)).astype(np.uint32)
