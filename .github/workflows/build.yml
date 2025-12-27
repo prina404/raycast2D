@@ -1,6 +1,7 @@
 name: Build 
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
@@ -47,9 +48,7 @@ jobs:
           CIBW_BUILD: "cp310-* cp310-* cp311-* cp312-* cp313-* cp314-*"
 
           # Architectures
-          CIBW_ARCHS_LINUX: "x86_64 aarch64"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CIBW_ARCHS_WINDOWS: "AMD64"
+          CIBW_ARCHS: "${{ matrix.arch }}"
 
           # Skip tests (already done in tests.yml)
           CIBW_TEST_SKIP: "*"
