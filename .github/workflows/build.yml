@@ -17,8 +17,24 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            runner: ubuntu-latest
+            arch: x86_64
+
+          - os: ubuntu-latest
+            runner: ubuntu-24.04-arm
+            arch: aarch64
+
+          - os: macos-latest
+            runner: macos-latest
+            arch: universal2
+
+          - os: windows-latest
+            runner: windows-latest
+            arch: AMD64
 
     steps:
       - name: Checkout repository
