@@ -1,8 +1,10 @@
 name: Build & Publish
 
 on:
+  workflow_dispatch:
   push:
     tags: [ "v*" ]
+
 
 jobs:
   wheels:
@@ -58,6 +60,8 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: wheels
+    permissions:
+      id-token: write    # Allow OIDC tokens to be requested
 
     steps:
       - name: Download wheels
