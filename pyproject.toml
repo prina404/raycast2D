@@ -5,9 +5,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raycast2D"
-version = "0.1.0"
+version = "0.1.1"
 authors = [{ name = "Matteo Princisgh", email = "princisgh@gmail.com" }]
 license = "GPL-3.0-only"
+description = "A fast image-based 2D raycasting library."
 license-files = ["LICENSE"]
 keywords = ["raycasting", "lidar", "raycasting2D", "robotics"]
 classifiers = [
@@ -30,7 +31,6 @@ test = ["pytest", "build"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
-pythonpath = ["src"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

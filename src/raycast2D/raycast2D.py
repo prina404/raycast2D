@@ -1,4 +1,4 @@
-import raycaster
+from . import raycaster
 import numpy as np
 from numpy.typing import NDArray
 from dataclasses import dataclass
@@ -13,6 +13,23 @@ def cast(
     ray_length: int = 500,
     only_true_collisions: bool = True,
 ) -> NDArray:
+    """
+    Cast 2D rays from a pose over a field-of-view and return ray endpoints.
+
+    Args:
+        image: Occupancy image of shape ``(H, W)`` or ``(H, W, 1)`` with an integer dtype.
+            The raycaster treats ``0`` as occupied; the start cell at ``pose`` must be non-zero.
+        pose: ``(x, y)`` or ``(x, y, yaw)`` where ``yaw`` is in radians.
+        num_rays: Number of rays to cast (samples uniformly over the FOV).
+        FOV: Field of view in degrees, centered around ``yaw``.
+        ray_length: Max ray length in pixels.
+        only_true_collisions: If True, return only rays that actually hit an obstacle
+            (LiDAR-style). If False, return endpoints for all rays.
+
+    Returns:
+        An array of shape ``(N, 2)`` with dtype ``uint32`` containing ``(x, y)`` endpoints.
+        If ``only_true_collisions=True``, ``N`` is the number of hits; otherwise ``N == num_rays``.
+    """
     _check_args(image, pose)
     if len(image.shape) == 3:   # take only the first channel
         image = image[:, :, 0]

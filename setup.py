@@ -18,7 +18,7 @@ name, version = read_project_metadata()
 
 ext_modules = [
     Extension(
-        "raycaster",
+        "raycast2D.raycaster",
         sources=["src/raycast2D/_raycastermodule.c"],
         include_dirs=[np.get_include()],
     )

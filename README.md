@@ -13,11 +13,35 @@ The core package depends only on `numpy`. Optional extras are provided for the i
 
 ![](media/raycast_compressed.gif)
 
-## Installation
+## Installation & Usage
 
 ```bash
 $ pip install raycast2D
 ```
+### Basic raycast on an image
+
+```python
+import numpy as np
+from raycast2D import cast
+from PIL import Image
+import matplotlib.pyplot as plt
+
+img = Image.open("<path/to/img.png>")
+img_array = np.array(img)
+img_array = img_array[:, :, 0].astype(np.uint8)  # Use single channel
+# img_array = img_array[img_array < 100] = 0  # threshold obstacles if needed
+
+rays = cast(img_array, pose=(250, 250), num_rays=360, ray_length=500)
+# rays is an array of shape (N, 2) where each row contains the (x, y) coordinates of the ray collisions
+
+plt.imshow(img_array, cmap='gray')
+plt.scatter([250], [250], c='green', s=10)
+plt.scatter(rays[:, 0], rays[:, 1], c='blue', s=1)
+for ray in rays:
+    plt.plot([250, ray[0]], [250, ray[1]], c='red', linewidth=0.5, alpha=0.3)
+plt.show()
+```
+
 ## Performance
 
 The benchmark script in `test/benchmark.py` runs a small set of examples and prints throughput in rays/s.
@@ -36,40 +60,14 @@ $ python3 test/benchmark.py
 ```
 
 
-## Usage
-
-### Basic raycast on an image
-
-```python
-import numpy as np
-from raycast2D import cast
-from PIL import Image
-import matplotlib.pyplot as plt
-
-img = Image.open("media/lab_intel.png")
-img_array = np.array(img)
-img_array = img_array[:, :, 0].astype(np.uint8)  # Use single channel
-# img_array = img_array[img_array < 100] = 0  # threshold if needed
-
-rays = cast(img_array, pose=(250, 250), num_rays=360, ray_length=500)
-# rays is an array of shape (N, 2) where each row contains the (x, y) coordinates of the ray collisions
-
-plt.imshow(img_array, cmap='gray')
-plt.scatter([250], [250], c='green', s=10)
-plt.scatter(rays[:, 0], rays[:, 1], c='blue', s=1)
-for ray in rays:
-    plt.plot([250, ray[0]], [250, ray[1]], c='red', linewidth=0.5, alpha=0.3)
-plt.show()
-```
-
 
 ## Interactive demo
 
 The repository includes an interactive `pygame` demo that raycasts from the current mouse position.
 
 ```bash
-pip install "raycast2D[extra]"
-python3 test/demo.py
+$ pip install "raycast2D[extra]"
+$ python3 test/demo.py
 ```
 
 ## Testing and development
@@ -77,7 +75,7 @@ python3 test/demo.py
 Install the test/development dependencies:
 
 ```bash
-pip install "raycast2D[test]"
+$ pip install "raycast2D[test]"
 ```
 
 Run the test suite with:
