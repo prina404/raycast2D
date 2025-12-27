@@ -10,7 +10,7 @@ ext_modules = [
 ]
 
 setup(
-    name="raycaster",
-    version="0.0.1",
     ext_modules=ext_modules,
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
 )

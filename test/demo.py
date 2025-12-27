@@ -1,4 +1,4 @@
-import sys
+from pathlib import Path
 import numpy as np
 import pygame
 from PIL import Image
@@ -10,7 +10,7 @@ from raycast2D import cast
 
 NUM_RAYS = 300
 FOV = 360
-RAY_LENGTH = 300
+RAY_LENGTH = 200
 FRAME_AVG_WINDOW = 60
 
 
@@ -22,10 +22,9 @@ def load_binary_map(path, threshold=100):
 
 
 def main():
-    fp = os.path.dirname(__file__)
-    grid = load_binary_map(os.path.join(
-        fp, "img/lab_intel.png"), threshold=100)
-    h, w = grid.shape
+    fp = Path(__file__).parents[1]
+    grid = load_binary_map(fp / "media/lab_intel.png", threshold=100)
+    h, w = grid.shape 
 
     pygame.init()
     screen = pygame.display.set_mode((w, h))
@@ -51,11 +50,13 @@ def main():
 
         mx, my = pygame.mouse.get_pos()
 
-        # Call your raycaster + measure frametime for the raycast step
-        t0 = time.perf_counter()
-        rays = cast(grid, (mx, my), num_rays=NUM_RAYS,
-                    FOV=FOV, ray_length=RAY_LENGTH)
-        dt_ms = (time.perf_counter() - t0) * 1000.0
+        try:    # avoid exceptions when mouse is on obstacle
+            t0 = time.perf_counter()
+            rays = cast(grid, (mx, my), num_rays=NUM_RAYS,
+                        FOV=FOV, ray_length=RAY_LENGTH, only_true_collisions=False)
+            dt_ms = (time.perf_counter() - t0) * 1000.0
+        except: 
+            continue
         ema_ms = dt_ms if ema_ms is None else (
             ema_ms + ema_alpha * (dt_ms - ema_ms))
 
@@ -71,7 +72,7 @@ def main():
                                (int(x1), int(y1)), 2)
 
         pygame.display.set_caption(
-            f"raycast2D demo | raycast EMA {ema_ms:.3f} ms (window={FRAME_AVG_WINDOW})"
+            f"raycast2D demo | raycast frametime {ema_ms:.3f} ms (window={FRAME_AVG_WINDOW})"
         )
 
         pygame.display.flip()

@@ -1,0 +1,46 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  tests:
+    name: Tests (Python ${{ matrix.python }} / NumPy ${{ matrix.numpy }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        numpy: ["min", "latest"]
+        exclude:
+          - python: "3.12"
+            numpy: "min"
+          - python: "3.13"
+            numpy: "min"
+          - python: "3.14"
+            numpy: "min"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: |
+          pip install -U pip
+          if [ "${{ matrix.numpy }}" = "min" ]; then
+            pip install numpy==1.25
+          else
+            pip install numpy
+          fi
+          pip install .[test]
+
+      - name: Run tests
+        run: pytest

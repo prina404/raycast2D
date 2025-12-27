@@ -11,6 +11,7 @@ def cast(
     num_rays: int = 1000,
     FOV: int = 360,
     ray_length: int = 500,
+    only_true_collisions: bool = True,
 ) -> NDArray:
     _check_args(image, pose)
     if len(image.shape) == 3:   # take only the first channel
@@ -28,8 +29,10 @@ def cast(
     
     # raycaster modifies the rays array inplace to include collisions
     raycaster.raycast(image.astype(np.uint8), rays, p.x, p.y)
-    # TODO: decide how to handle true collisions vs ray_length collisions 
-    return rays.copy()[:, :2]
+    
+    if only_true_collisions:    # LiDaR-style output
+        return rays[rays[:, 2] == 1][:, :2]
+    return rays[:, :2]
 
 
 @dataclass
@@ -51,7 +54,7 @@ def _check_args(img: NDArray, pose: tuple) -> None:
         )
     if len(pose) < 2 or len(pose) > 3:
         raise ValueError(
-            f"Received a pose tuple {pose}. The only supposed pose formats are (x, y) and (x, y, yaw).")
+            f"Received a pose tuple {pose}. The only supported pose formats are (x, y) and (x, y, yaw).")
 
     x, y = pose[0], pose[1]
     H, W = shape[0], shape[1]
@@ -61,4 +64,7 @@ def _check_args(img: NDArray, pose: tuple) -> None:
     if y < 0 or y >= H:
         raise IndexError(
             f"y coordinate ({y}) if out of bounds for array with height {H}.")
-
+        
+    if img[y, x] == 0:
+        raise ValueError(
+            f"The pose {pose} corresponds to an occupied cell, cannot raycast from an occupied cell.")

@@ -1,0 +1,5 @@
+recursive-exclude media *.gif
+recursive-exclude media *.png
+recursive-exclude test *.py
+recursive-include src/*
+include pyproject.toml
