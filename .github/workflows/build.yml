@@ -50,7 +50,7 @@ jobs:
           # Architectures
           CIBW_ARCHS: "${{ matrix.arch }}"
 
-          # Skip tests (already done in tests.yml)
+          CIBW_SKIP: "*-musllinux_*"
           CIBW_TEST_SKIP: "*"
 
           CIBW_BUILD_VERBOSITY: 1
