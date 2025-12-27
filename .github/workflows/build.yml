@@ -15,7 +15,7 @@ on:
 jobs:
   wheels:
     name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
 
     strategy:
       fail-fast: false
