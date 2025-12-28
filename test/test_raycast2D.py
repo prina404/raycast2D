@@ -1,9 +1,11 @@
 import math
+import warnings
 
 import numpy as np
 import pytest
 
 from raycast2D import cast
+import raycast2D.raycast2D as rc_mod
 
 
 def test_empty_map_single_ray_hits_border_right() -> None:
@@ -80,6 +82,12 @@ def test_rejects_non_integer_dtype() -> None:
         cast(img, (5, 5))
 
 
+def test_raises_when_image_dtype_is_not_np_integral() -> None:
+    img = np.full((10, 10), 1.0, dtype=np.float64)
+    with pytest.raises(ValueError):
+        cast(img, (5, 5))
+
+
 def test_accepts_single_channel_3d_image() -> None:
     img = np.full((10, 10, 1), 255, dtype=np.uint8)
     rays = cast(img, (5, 5, 0.0), num_rays=1, FOV=1, ray_length=50)
@@ -145,3 +153,29 @@ def test_only_true_collisions_filters_to_obstacle_hits_subset() -> None:
     # One ray hits the obstacle; the other ends in free space (no collision)
     assert (15, 13) in pts
     assert (15, 18) in pts
+
+
+def test_uint8_conversion_warning_emitted_only_once() -> None:
+    img = np.full((20, 20), 255, dtype=np.int32)
+    pose = (10, 10, 0.0)
+
+    # Make this test deterministic: clear the module warning registry so the first call warns.
+    registry = getattr(rc_mod, "__warningregistry__", None)
+    if isinstance(registry, dict):
+        registry.clear()
+
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter("default")
+
+        cast(img, pose, num_rays=1, FOV=1,
+             ray_length=3, only_true_collisions=False)
+        cast(img, pose, num_rays=1, FOV=1,
+             ray_length=3, only_true_collisions=False)
+
+    conversion_warnings = [
+        w
+        for w in recorded
+        if issubclass(w.category, UserWarning)
+        and "Converting image of dtype" in str(w.message)
+    ]
+    assert len(conversion_warnings) == 1

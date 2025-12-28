@@ -3,6 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 from dataclasses import dataclass
 import math
+import warnings
 
 
 def cast(
@@ -27,14 +28,17 @@ def cast(
             (LiDAR-style). If False, return endpoints for all rays.
 
     Returns:
-        An array of shape ``(N, 2)`` with dtype ``uint32`` containing ``(x, y)`` endpoints.
+        An array of shape ``(N, 2)`` with dtype ``uint32`` containing ``(x, y)`` collision coordinates.
         If ``only_true_collisions=True``, ``N`` is the number of hits; otherwise ``N == num_rays``.
     """
     _check_args(image, pose)
     if len(image.shape) == 3:   # take only the first channel
         image = image[:, :, 0]
+    if image.dtype != np.uint8:
+        warnings.warn(f"Converting image of dtype {image.dtype} to uint8 for raycasting.")
+        image = image.astype(np.uint8)
 
-    p = _POSE(*pose)
+    p = _POSE(*pose) # type: ignore
     half_fov = math.radians(FOV) / 2.0
     start_angle = p.yaw - half_fov
     end_angle = p.yaw + half_fov
@@ -46,7 +50,7 @@ def cast(
     rays = np.column_stack((x_rays, y_rays, np.zeros_like(y_rays)))
     
     # raycaster modifies the rays array inplace to include collisions
-    raycaster.raycast(image.astype(np.uint8), rays, p.x, p.y)
+    raycaster.raycast(image, rays, p.x, p.y)
     
     if only_true_collisions:    # LiDaR-style output
         return rays[rays[:, 2] == 1][:, :2]
