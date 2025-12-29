@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raycast2D"
-version = "0.1.2"
+version = "0.2.0"
 authors = [{ name = "Matteo Princisgh", email = "princisgh@gmail.com" }]
 license = "GPL-3.0-only"
 description = "A fast image-based 2D raycasting library."
