@@ -1,3 +1,3 @@
-from .raycast2D import cast
+from .raycast2D import cast, Lidar2D
 
-__all__ = ["cast"]
+__all__ = ["cast", "Lidar2D"]
