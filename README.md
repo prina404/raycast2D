@@ -6,10 +6,10 @@
 [![Build](https://github.com/prina404/raycast2D/actions/workflows/build.yml/badge.svg)](https://github.com/prina404/raycast2D/actions/workflows/build.yml)
 [![Tests](https://github.com/prina404/raycast2D/actions/workflows/tests.yml/badge.svg)](https://github.com/prina404/raycast2D/actions/workflows/tests.yml)
 
-`raycast2D` is a fast, single-core 2D raycasting implementation written in C with a small Python API.
+`raycast2D` is a fast, single-thread 2D raycasting implementation written in C with a small Python API.
 It operates on NumPy occupancy grids / binary images (free cells are non-zero; occupied cells are `0`) and computes ray intersections using Bresenham line algorithm.
 
-The core package depends only on `numpy`. Optional extras are provided for the interactive demo and development.
+The core package depends only on `numpy`.
 
 ![](media/raycast_compressed.gif)
 
@@ -18,29 +18,65 @@ The core package depends only on `numpy`. Optional extras are provided for the i
 ```bash
 $ pip install raycast2D
 ```
-### Basic raycast on an image
+### Basic `cast` function usage
 
 ```python
 import numpy as np
-from raycast2D import cast
 from PIL import Image
-import matplotlib.pyplot as plt
+from raycast2D import cast
 
 img = Image.open("<path/to/img.png>")
-img_array = np.array(img)
-img_array = img_array[:, :, 0].astype(np.uint8)  # Use single channel
-# img_array = img_array[img_array < 100] = 0  # threshold obstacles if needed
+img_array = np.array(img)[:, :, 0] # Use single channel
+pose = (250, 250, 0.5)  # x, y, yaw in radians 
 
-rays = cast(img_array, pose=(250, 250), num_rays=360, ray_length=500)
-# rays is an array of shape (N, 2) where each row contains the (x, y) coordinates of the ray collisions
+rays = cast(img_array, pose, num_rays=360, ray_length=500)
 
-plt.imshow(img_array, cmap='gray')
-plt.scatter([250], [250], c='green', s=10)
-plt.scatter(rays[:, 0], rays[:, 1], c='blue', s=1)
+print(rays[:5])
+# Expected output (example):
+# [[x0 y0]
+#  [x1 y1]
+#  [x2 y2]
+#  [x3 y3]
+#  [x4 y4]]
+```
+
+### Using the `Lidar2D` class
+
+```python
+from raycast2D import Lidar2D
+# [...] 
+lidar = Lidar2D(num_rays=360, FOV=360, ray_length=500)
+lidar.set_map(img_array)
+
+rays = lidar.scan((250, 250, 0.5))
+
+print(rays[:5])
+# same output as before...
+```
+
+### Plotting example
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from raycast2D import cast
+
+img = Image.open("media/lab_intel.png")
+img_array = np.array(img)[:, :, 0] # Use single channel
+
+pose = (350, 350, -1.0)
+rays = cast(img_array, pose=pose, num_rays=200, FOV=90, ray_length=250)
+
+plt.imshow(img_array, cmap="gray")
+plt.scatter([pose[0]], [pose[1]], c="green", s=10)
+plt.scatter(rays[:, 0], rays[:, 1], c="blue", s=1)
 for ray in rays:
-    plt.plot([250, ray[0]], [250, ray[1]], c='red', linewidth=0.5, alpha=0.3)
+    plt.plot([pose[0], ray[0]], [pose[1], ray[1]], c="red", linewidth=0.5, alpha=0.3)
 plt.show()
 ```
+
+![](media/example.png)
 
 ## Performance
 
@@ -49,17 +85,15 @@ Example results (tested on an i7-9700k):
 
 |  Map size | Ray length | Rays per call | Mean time (ms) | Throughput (rays/s) |
 | --------: | ---------: | ------------: | -------------: | ------------------: |
-|   512×512 |       2000px |          5000 |         0.2904 |          17,216,880 |
-| 4096×4096 |       2000px |          5000 |         1.7626 |           2,836,661 |
-| 8192×8192 |       2000px |          5000 |         7.3452 |             680,719 |
+|   512×512 |     2000px |          5000 |         0.2490 |          20,083,924 |
+| 4096×4096 |     2000px |          5000 |         0.2848 |          17,556,549 |
+| 8192×8192 |     2000px |          5000 |         0.2571 |          19,446,324 |
 
 To reproduce on your machine:
 
 ```bash
 $ python3 test/benchmark.py
 ```
-
-
 
 ## Interactive demo
 
